@@ -1,12 +1,14 @@
 import { defineConfig } from "vite";
+import { tanstackStart } from "@tanstack/react-start/plugin/vite";
 import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
-import tailwindcss from "@tailwindcss/vite"; // <-- 1. Import Tailwind v4 plugin
+import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   plugins: [
-    react(), 
-    tsconfigPaths(), 
-    tailwindcss() // <-- 2. Add it to the plugins array
+    tsconfigPaths(),
+    tanstackStart(),
+    react(),
+    tailwindcss(),
   ],
 });
