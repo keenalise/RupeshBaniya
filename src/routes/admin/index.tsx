@@ -7,65 +7,40 @@ export const Route = createFileRoute("/admin/")({
   component: AdminDashboard,
 });
 
-const TABS = [
-  "hero",
-  "expertise",
-  "experience",
-  "publications",
-  "education",
-  "recognition",
-  "social_links",
-  "contact_messages",
-] as const;
-
+const TABS = ["hero","expertise","experience","publications","education","recognition","social_links","contact_messages"] as const;
 type Tab = (typeof TABS)[number];
 
 function AdminDashboard() {
   const navigate = useNavigate();
   const [session, setSession] = useState<any>(undefined);
   const [tab, setTab] = useState<Tab>("hero");
-
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (!data.session) {
-        navigate({ to: "/admin/login" });
-      } else {
-        setSession(data.session);
-      }
+      if (!data.session) navigate({ to: "/admin/login" });
+      else setSession(data.session);
     });
   }, [navigate]);
-
   async function logout() {
     await supabase.auth.signOut();
     navigate({ to: "/admin/login" });
   }
-
   if (session === undefined) return <div className="p-10">Loading...</div>;
-
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-6">
           <span className="font-serif text-[15px]">Admin Dashboard</span>
-          <button onClick={logout} className="text-[13px] uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground">
-            Log out
-          </button>
+          <button onClick={logout} className="text-[13px] uppercase tracking-[0.16em] text-muted-foreground hover:text-foreground">Log out</button>
         </div>
       </header>
-
       <div className="mx-auto max-w-6xl px-6 py-8">
         <div className="mb-8 flex flex-wrap gap-x-6 gap-y-2 border-b border-border pb-3 text-[12px] uppercase tracking-[0.14em]">
           {TABS.map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className={tab === t ? "text-foreground border-b-2 border-foreground pb-1" : "text-muted-foreground hover:text-foreground"}
-            >
+            <button key={t} onClick={() => setTab(t)} className={tab === t ? "text-foreground border-b-2 border-foreground pb-1" : "text-muted-foreground hover:text-foreground"}>
               {t.replace("_", " ")}
             </button>
           ))}
         </div>
-
         <TableEditor table={tab} />
       </div>
     </div>
@@ -73,56 +48,17 @@ function AdminDashboard() {
 }
 
 const FIELD_CONFIG: Record<Tab, { name: string; type: "text" | "textarea" | "number" }[]> = {
-  hero: [
-    { name: "name", type: "text" },
-    { name: "tagline", type: "text" },
-    { name: "bio", type: "textarea" },
-    { name: "location", type: "text" },
-    { name: "availability", type: "text" },
-  ],
-  expertise: [
-    { name: "title", type: "text" },
-    { name: "body", type: "textarea" },
-    { name: "sort_order", type: "number" },
-  ],
-  experience: [
-    { name: "period", type: "text" },
-    { name: "role", type: "text" },
-    { name: "org", type: "text" },
-    { name: "location", type: "text" },
-    { name: "body", type: "textarea" },
-    { name: "sort_order", type: "number" },
-  ],
-  publications: [
-    { name: "citation", type: "text" },
-    { name: "title", type: "text" },
-    { name: "venue", type: "text" },
-    { name: "year", type: "number" },
-    { name: "type", type: "text" },
-    { name: "sort_order", type: "number" },
-  ],
-  education: [
-    { name: "degree", type: "text" },
-    { name: "org", type: "text" },
-    { name: "period", type: "text" },
-    { name: "sort_order", type: "number" },
-  ],
-  recognition: [
-    { name: "title", type: "text" },
-    { name: "detail", type: "text" },
-    { name: "sort_order", type: "number" },
-  ],
-  social_links: [
-    { name: "label", type: "text" },
-    { name: "url", type: "text" },
-    { name: "sort_order", type: "number" },
-  ],
-  contact_messages: [
-    { name: "name", type: "text" },
-    { name: "email", type: "text" },
-    { name: "message", type: "textarea" },
-  ],
+  hero: [{name:"name",type:"text"},{name:"tagline",type:"text"},{name:"bio",type:"textarea"},{name:"location",type:"text"},{name:"availability",type:"text"}],
+  expertise: [{name:"title",type:"text"},{name:"body",type:"textarea"},{name:"sort_order",type:"number"}],
+  experience: [{name:"period",type:"text"},{name:"role",type:"text"},{name:"org",type:"text"},{name:"location",type:"text"},{name:"body",type:"textarea"},{name:"sort_order",type:"number"}],
+  publications: [{name:"citation",type:"text"},{name:"title",type:"text"},{name:"venue",type:"text"},{name:"year",type:"number"},{name:"type",type:"text"},{name:"sort_order",type:"number"}],
+  education: [{name:"degree",type:"text"},{name:"org",type:"text"},{name:"period",type:"text"},{name:"sort_order",type:"number"}],
+  recognition: [{name:"title",type:"text"},{name:"detail",type:"text"},{name:"sort_order",type:"number"}],
+  social_links: [{name:"label",type:"text"},{name:"url",type:"text"},{name:"sort_order",type:"number"}],
+  contact_messages: [{name:"name",type:"text"},{name:"email",type:"text"},{name:"message",type:"textarea"}],
 };
+
+const db = supabase as any;
 
 function TableEditor({ table }: { table: Tab }) {
   const [rows, setRows] = useState<any[]>([]);
@@ -132,29 +68,18 @@ function TableEditor({ table }: { table: Tab }) {
 
   async function load() {
     setLoading(true);
-    const { data, error } = await supabase.from(table).select("*").order("created_at", { ascending: false, nullsFirst: false });
-    if (error) {
-      // fallback without order if column doesn't exist
-      const fallback = await supabase.from(table).select("*");
-      setRows(fallback.data ?? []);
-    } else {
-      setRows(data ?? []);
-    }
+    const { data, error } = await db.from(table).select("*");
+    if (error) console.error("Admin load error:", error);
+    setRows(data ?? []);
     setLoading(false);
   }
 
-  useEffect(() => {
-    load();
-    setEditing(null);
-  }, [table]);
+  useEffect(() => { load(); setEditing(null); }, [table]);
 
   async function handleDelete(id: string) {
     if (!confirm("Delete this entry?")) return;
-    const { error } = await supabase.from(table).delete().eq("id", id);
-    if (error) {
-      toast.error("Failed to delete");
-      return;
-    }
+    const { error } = await db.from(table).delete().eq("id", id);
+    if (error) { toast.error("Failed to delete"); return; }
     toast.success("Deleted");
     load();
   }
@@ -165,13 +90,12 @@ function TableEditor({ table }: { table: Tab }) {
     for (const f of fields) {
       payload[f.name] = f.type === "number" ? Number(values[f.name] || 0) : values[f.name] ?? "";
     }
-
     if (editing?.id) {
-      const { error } = await supabase.from(table).update(payload).eq("id", editing.id);
+      const { error } = await db.from(table).update(payload).eq("id", editing.id);
       if (error) { toast.error(error.message); return; }
       toast.success("Updated");
     } else {
-      const { error } = await supabase.from(table).insert(payload);
+      const { error } = await db.from(table).insert(payload);
       if (error) { toast.error(error.message); return; }
       toast.success("Added");
     }
@@ -180,29 +104,17 @@ function TableEditor({ table }: { table: Tab }) {
   }
 
   const fields = FIELD_CONFIG[table];
-
   return (
     <div>
       {!readOnly && (
         <div className="mb-6">
           {editing ? (
-            <EntryForm
-              fields={fields}
-              initial={editing.id ? editing : {}}
-              onCancel={() => setEditing(null)}
-              onSave={handleSave}
-            />
+            <EntryForm fields={fields} initial={editing.id ? editing : {}} onCancel={() => setEditing(null)} onSave={handleSave} />
           ) : (
-            <button
-              onClick={() => setEditing({})}
-              className="border border-foreground px-4 py-2 text-[12px] uppercase tracking-[0.14em] hover:bg-foreground hover:text-background transition-colors"
-            >
-              + Add new
-            </button>
+            <button onClick={() => setEditing({})} className="border border-foreground px-4 py-2 text-[12px] uppercase tracking-[0.14em] hover:bg-foreground hover:text-background transition-colors">+ Add new</button>
           )}
         </div>
       )}
-
       {loading ? (
         <p className="text-muted-foreground text-sm">Loading...</p>
       ) : rows.length === 0 ? (
@@ -233,51 +145,23 @@ function TableEditor({ table }: { table: Tab }) {
   );
 }
 
-function EntryForm({
-  fields,
-  initial,
-  onSave,
-  onCancel,
-}: {
-  fields: { name: string; type: string }[];
-  initial: Record<string, any>;
-  onSave: (values: Record<string, any>) => void;
-  onCancel: () => void;
-}) {
+function EntryForm({ fields, initial, onSave, onCancel }: { fields: { name: string; type: string }[]; initial: Record<string, any>; onSave: (values: Record<string, any>) => void; onCancel: () => void; }) {
   const [values, setValues] = useState<Record<string, any>>(initial);
-
   return (
     <div className="border border-border p-5 space-y-4">
       {fields.map((f) => (
         <div key={f.name}>
           <label className="block text-[11px] uppercase tracking-[0.14em] text-muted-foreground mb-1">{f.name}</label>
           {f.type === "textarea" ? (
-            <textarea
-              value={values[f.name] ?? ""}
-              onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
-              rows={4}
-              className="w-full bg-transparent border border-border p-2 text-sm focus:outline-none focus:border-foreground"
-            />
+            <textarea value={values[f.name] ?? ""} onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))} rows={4} className="w-full bg-transparent border border-border p-2 text-sm focus:outline-none focus:border-foreground" />
           ) : (
-            <input
-              type={f.type === "number" ? "number" : "text"}
-              value={values[f.name] ?? ""}
-              onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
-              className="w-full bg-transparent border border-border p-2 text-sm focus:outline-none focus:border-foreground"
-            />
+            <input type={f.type === "number" ? "number" : "text"} value={values[f.name] ?? ""} onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))} className="w-full bg-transparent border border-border p-2 text-sm focus:outline-none focus:border-foreground" />
           )}
         </div>
       ))}
       <div className="flex gap-3">
-        <button
-          onClick={() => onSave(values)}
-          className="border border-foreground px-4 py-2 text-[12px] uppercase tracking-[0.14em] hover:bg-foreground hover:text-background transition-colors"
-        >
-          Save
-        </button>
-        <button onClick={onCancel} className="text-[12px] uppercase tracking-[0.14em] text-muted-foreground hover:text-foreground">
-          Cancel
-        </button>
+        <button onClick={() => onSave(values)} className="border border-foreground px-4 py-2 text-[12px] uppercase tracking-[0.14em] hover:bg-foreground hover:text-background transition-colors">Save</button>
+        <button onClick={onCancel} className="text-[12px] uppercase tracking-[0.14em] text-muted-foreground hover:text-foreground">Cancel</button>
       </div>
     </div>
   );

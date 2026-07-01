@@ -90,7 +90,7 @@ function Header() {
 function Section({ id, eyebrow, title, children }: { id?: string; eyebrow: string; title: string; children: React.ReactNode }) {
   return (
     <section id={id} className="border-t border-border/70">
-      <div className="mx-auto max-w-6xl px-6 py-20 md:py-28">
+      <div className="mx-auto max-w-6xl px-6 pt-20 md:pt-28 pb-10 md:pb-0">
         <div className="mb-12 grid gap-2 md:grid-cols-12 md:gap-10">
           <div className="md:col-span-3">
             <span className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">{eyebrow}</span>
